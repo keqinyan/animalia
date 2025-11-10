@@ -22,13 +22,16 @@
         .container {
             max-width: 1000px;
             margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
+            padding: 0 20px 20px 20px;
         }
 
         .chapter {
             display: none;
             animation: fadeIn 1s;
+        }
+        
+        .chapter.active {
+            display: block;
         }
 
         .chapter.active {
@@ -54,7 +57,7 @@
 
         h1 {
             font-size: 2em;
-            margin: 15px 0;
+            margin: 0 0 15px 0;
             text-align: center;
             text-shadow: 0 0 10px #33ff33;
         }
@@ -69,7 +72,7 @@
 
         .system-text {
             color: #00ff00;
-            margin: 10px 0;
+            margin: 0 0 10px 0;
             line-height: 1.8;
         }
 
@@ -2225,6 +2228,8 @@
             
             for (let i = 0; i < texts.length; i++) {
                 const p = document.createElement('p');
+                p.style.textAlign = 'center';
+                p.style.margin = '10px 0';
                 container.appendChild(p);
                 
                 await typeWriterEffect(p, texts[i], 40);
