@@ -1,0 +1,2363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案件编号：Ω-Animalia</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #33ff33;
+            overflow-x: hidden;
+            transition: all 0.5s;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .chapter {
+            display: none;
+            animation: fadeIn 1s;
+        }
+
+        .chapter.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        .glitch {
+            animation: glitch 0.3s infinite;
+        }
+
+        h1 {
+            font-size: 2em;
+            margin: 15px 0;
+            text-align: center;
+            text-shadow: 0 0 10px #33ff33;
+        }
+
+        h2 {
+            font-size: 1.5em;
+            margin: 30px 0 15px 0;
+            color: #00ff00;
+            border-left: 4px solid #33ff33;
+            padding-left: 15px;
+        }
+
+        .system-text {
+            color: #00ff00;
+            margin: 10px 0;
+            line-height: 1.8;
+        }
+
+        .warning {
+            color: #ff3333;
+            animation: blink 1s infinite;
+        }
+
+        .warning-static {
+            color: #ff6666;
+            /* 不闪烁，只是红色 */
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0.3; }
+        }
+
+        /* 打字机开场样式 */
+        #bootScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        #bootScreen.hidden {
+            display: none;
+        }
+
+        #bootText {
+            font-size: 1.1em;
+            color: #33ff33;
+            text-align: left;
+            white-space: pre-wrap;
+            padding: 40px;
+            max-width: 800px;
+            line-height: 1.8;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1em;
+            background: #33ff33;
+            margin-left: 2px;
+            animation: cursorBlink 0.8s infinite;
+        }
+
+        @keyframes cursorBlink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        #bootProgress {
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #00ff00;
+        }
+
+        .document {
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #33ff33;
+            padding: 25px;
+            margin: 20px 0;
+            border-radius: 5px;
+            line-height: 1.8;
+            font-size: 0.95em;
+        }
+
+        .document p {
+            margin-bottom: 15px;
+        }
+
+        .document .meta {
+            color: #00ff00;
+            font-size: 0.85em;
+            border-bottom: 1px solid #33ff33;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+
+        .file-card {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid #33ff33;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-card:hover {
+            background: rgba(30, 30, 30, 0.9);
+            box-shadow: 0 0 20px rgba(51, 255, 51, 0.3);
+            transform: translateX(5px);
+        }
+
+        .file-card.expanded {
+            background: rgba(30, 30, 30, 0.95);
+        }
+
+        .file-content {
+            display: none;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #33ff33;
+            color: #00cc00;
+        }
+
+        .file-content.visible {
+            display: block;
+        }
+
+        button {
+            background: #001100;
+            color: #33ff33;
+            border: 2px solid #33ff33;
+            padding: 15px 30px;
+            margin: 10px 5px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            transition: all 0.3s;
+            border-radius: 3px;
+        }
+
+        button:hover:not(:disabled) {
+            background: #33ff33;
+            color: #000;
+            box-shadow: 0 0 20px #33ff33;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        input[type="text"], input[type="password"], textarea {
+            background: #000;
+            color: #33ff33;
+            border: 1px solid #33ff33;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 1em;
+            width: 100%;
+            margin: 10px 0;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .puzzle-container {
+            margin: 30px 0;
+            padding: 25px;
+            border: 2px dashed #33ff33;
+            background: rgba(0, 20, 0, 0.3);
+        }
+
+        .puzzle-title {
+            font-size: 1.2em;
+            color: #00ff00;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        
+
+        
+
+        
+
+        .progress-bar {
+            width: 100%;
+            height: 5px;
+            background: #001100;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1000;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #33ff33;
+            width: 0%;
+            transition: width 0.5s;
+        }
+
+        .timer {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            font-size: 1.2em;
+            color: #33ff33;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border: 1px solid #33ff33;
+            border-radius: 3px;
+            z-index: 999;
+        }
+
+        .inventory {
+            position: fixed;
+            bottom: 20px;
+            left: -280px;
+            background: rgba(0, 0, 0, 0.95);
+            border: 1px solid #33ff33;
+            padding: 15px;
+            width: 300px;
+            border-radius: 0 3px 3px 0;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 999;
+            transition: left 0.3s ease;
+            border-left: none;
+        }
+        
+        .inventory.open {
+            left: 0;
+        }
+        
+        .inventory-toggle {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            background: rgba(0, 0, 0, 0.9);
+            border: 1px solid #33ff33;
+            border-left: none;
+            padding: 10px 8px;
+            cursor: pointer;
+            z-index: 1000;
+            border-radius: 0 3px 3px 0;
+            color: #33ff33;
+            font-size: 0.9em;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transition: all 0.3s;
+        }
+        
+        .inventory-toggle:hover {
+            background: rgba(51, 255, 51, 0.2);
+        }
+        
+        .inventory-toggle.hidden {
+            display: none;
+        }
+
+        .inventory-title {
+            font-size: 1.1em;
+            margin-bottom: 10px;
+            color: #00ff00;
+        }
+
+        .inventory-item {
+            background: rgba(20, 20, 20, 0.8);
+            padding: 8px;
+            margin: 5px 0;
+            border-left: 2px solid #33ff33;
+            font-size: 0.9em;
+        }
+
+        .email-thread {
+            margin: 20px 0;
+        }
+
+        .email {
+            background: rgba(20, 20, 20, 0.9);
+            border-left: 3px solid #33ff33;
+            padding: 20px;
+            margin: 15px 0;
+        }
+
+        .email-header {
+            color: #00ff00;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #33ff33;
+        }
+
+        .audio-wave {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            margin: 20px 0;
+        }
+
+        .wave-bar {
+            width: 4px;
+            height: 20px;
+            background: #33ff33;
+            animation: wave 1s ease-in-out infinite;
+        }
+
+        .wave-bar:nth-child(2) { animation-delay: 0.1s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.3s; }
+        .wave-bar:nth-child(5) { animation-delay: 0.4s; }
+
+        @keyframes wave {
+            0%, 100% { height: 20px; }
+            50% { height: 50px; }
+        }
+
+        .static-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            opacity: 0;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1),
+                rgba(0, 0, 0, 0.1) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            z-index: 9999;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(51, 255, 51, 0.5);
+            animation: scan 3s linear infinite;
+            pointer-events: none;
+            z-index: 998;
+        }
+
+        @keyframes scan {
+            from { top: 0; }
+            to { top: 100%; }
+        }
+
+        .evidence-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .evidence-item {
+            background: rgba(20, 20, 20, 0.9);
+            border: 1px solid #33ff33;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .evidence-item:hover {
+            background: rgba(40, 40, 40, 0.9);
+            box-shadow: 0 0 15px rgba(51, 255, 51, 0.3);
+        }
+
+        .narrative-text {
+            font-size: 1.05em;
+            line-height: 2;
+            color: #00cc00;
+            margin: 15px 0;
+            text-align: justify;
+        }
+
+        .redacted {
+            background: #33ff33;
+            color: #33ff33;
+            cursor: help;
+            padding: 0 5px;
+            transition: all 0.3s;
+        }
+
+        .redacted:hover {
+            background: transparent;
+        }
+
+        .ending-screen {
+            text-align: center;
+            padding: 50px 20px;
+        }
+
+        .ending-screen h2 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px currentColor;
+            border: none;
+            padding: 0;
+        }
+
+        .choice-button {
+            display: block;
+            width: 100%;
+            margin: 10px 0;
+            text-align: left;
+            padding: 20px;
+        }
+
+        /* 打字机开场动画 */
+        .boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 1s;
+        }
+
+        .boot-screen.hidden {
+            display: none;
+        }
+
+        .boot-text {
+            font-family: 'Courier New', monospace;
+            font-size: 1.2em;
+            color: #33ff33;
+            text-align: left;
+            padding: 40px;
+            max-width: 800px;
+            line-height: 2;
+        }
+
+        .boot-line {
+            opacity: 0;
+            margin: 5px 0;
+        }
+
+        .boot-line.typing {
+            opacity: 1;
+        }
+
+        .cursor {
+            display: inline-block;
+            width: 10px;
+            height: 1.2em;
+            background: #33ff33;
+            margin-left: 2px;
+            animation: blink-cursor 0.8s infinite;
+        }
+
+        @keyframes blink-cursor {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .boot-prompt {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #33ff33;
+            text-align: center;
+            opacity: 0;
+            animation: fadeIn 1s forwards;
+            animation-delay: 8s;
+        }
+
+        .boot-button {
+            background: #001100;
+            color: #33ff33;
+            border: 2px solid #33ff33;
+            padding: 15px 40px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+
+        .boot-button:hover {
+            background: #33ff33;
+            color: #000;
+            box-shadow: 0 0 30px #33ff33;
+        }
+
+        @media (max-width: 768px) {
+            .evidence-board {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .inventory {
+                position: static;
+                margin: 20px 0;
+                max-width: 100%;
+            }
+
+            .timer {
+                position: static;
+                display: inline-block;
+                margin: 10px auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 开场启动动画 -->
+    <div class="boot-screen" id="bootScreen">
+        <div class="boot-text">
+            <div class="boot-line" id="line1">[系统启动] 警务数据库 v7.2.1<span class="cursor" id="cursor1"></span></div>
+            <div class="boot-line" id="line2">[权限验证] 调查员访问已授权<span class="cursor" id="cursor2"></span></div>
+            <div class="boot-line" id="line3">[日期] 2025年4月17日 - 03:47:22<span class="cursor" id="cursor3"></span></div>
+            <div class="boot-line" id="line4" style="color: #ff3333;">[警告] 案件群组 Ω 被标记为"异常关联"<span class="cursor" id="cursor4"></span></div>
+            <div class="boot-line" id="line5">[加载] 案件档案系统...<span class="cursor" id="cursor5"></span></div>
+            <div class="boot-line" id="line6" style="color: #00ff00;">[就绪] 系统初始化完成<span class="cursor" id="cursor6"></span></div>
+            
+            <div class="boot-prompt" id="bootPrompt">
+                <p style="font-size: 0.95em; opacity: 0.8;">按下按钮进入案件调查系统</p>
+                <button class="boot-button" onclick="startGame()">开始调查 ▶</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="progress-bar">
+        <div class="progress-fill" id="progress"></div>
+    </div>
+    <div class="timer" id="timer">00:00</div>
+    <div class="static-effect" id="staticEffect"></div>
+    <div class="scanline"></div>
+
+    <div class="inventory-toggle" id="inventoryToggle" onclick="toggleInventory()">
+        📋 线索
+    </div>
+    <div class="inventory" id="inventoryPanel">
+        <div class="inventory-title">📋 收集的线索</div>
+        <div id="inventoryItems">
+            <p style="opacity: 0.5; font-size: 0.85em;">暂无线索...</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- 第一章：档案室 -->
+        <div class="chapter active" id="chapter1">
+            <h1>案件编号：Ω-Animalia</h1>
+            
+            <div class="system-text">
+                <p style="color: #00ff00; font-size: 0.9em; opacity: 0.8;">
+                    <em>💡 提示：建议佩戴耳机以获得最佳体验</em>
+                </p>
+            </div>
+
+            <h2>案件摘要</h2>
+            <div class="document">
+                <div class="meta">
+                    分类：连环死亡事件 | 优先级：特殊 | 调查状态：进行中
+                </div>
+                <p>过去72小时内，本市发生三起非自然死亡案件。死者均为某职业技术学院的在职人员，死亡时间呈现特殊模式，尸检报告显示生理指标异常但无明确死因。</p>
+                <p>技术部门在调取死者电子设备时发现：<strong>三人生前最后访问了同一个网站域名</strong>，且访问行为高度一致。该网站已被标记进入监控列表。</p>
+                <p class="warning-static">特殊注记：所有死者面部均呈现极度恐惧表情，瞳孔异常扩张。现场未发现挣扎痕迹。</p>
+            </div>
+
+            <h2>死者档案</h2>
+
+            <div class="file-card" onclick="toggleFile('fileA')">
+                <strong>📄 档案 A - 李慧敏（校务处主任）</strong>
+                <p style="font-size: 0.9em; color: #00cc00; margin-top: 5px;">点击展开详细信息</p>
+                <div class="file-content" id="fileA">
+                    <p><strong>基本信息：</strong></p>
+                    <p>年龄：47岁 | 死亡地点：教学楼三楼走廊 | 发现时间：2025.04.15 03:17</p>
+                    
+                    <p><strong>现场描述：</strong></p>
+                    <p>死者倒地姿势呈蜷缩状，右手紧握手机，屏幕仍处于点亮状态。手机电量剩余2%，最后打开的应用为Chrome浏览器，页面停留在一个绿色背景的网站上，有一个"确认"按钮。</p>
+                    
+                    <p><strong>浏览记录（最后10条）：</strong></p>
+                    <p>23:45 - 搜索"流浪动物管控培训"<br>
+                    00:12 - 访问 carepets.org<br>
+                    00:34 - 停留在"讲师认证"页面<br>
+                    01:52 - 下载文件"培训手册2019.pdf"<br>
+                    02:41 - 访问"内部日志"<br>
+                    03:15 - 页面崩溃记录<br>
+                    03:17 - 活动终止</p>
+                    
+                    <p><strong>关键证物：</strong></p>
+                    <p>手机备忘录中有一条未完成的记录："编号，是04..."</p>
+                </div>
+            </div>
+
+            <div class="file-card" onclick="toggleFile('fileB')">
+                <strong>📄 档案 B - 王建强（保洁员）</strong>
+                <p style="font-size: 0.9em; color: #00cc00; margin-top: 5px;">点击展开详细信息</p>
+                <div class="file-content" id="fileB">
+                    <p><strong>基本信息：</strong></p>
+                    <p>年龄：52岁 | 死亡地点：设备间 | 发现时间：2025.04.16 04:17</p>
+                    
+                    <p><strong>现场描述：</strong></p>
+                    <p>死者坐在角落，背靠墙壁，双手捂住耳朵。现场发现一张皱巴巴的纸条，上面用颤抖的笔迹写着一串神秘的点和横线：</p>
+                    <p style="font-family: monospace; font-size: 1.2em; letter-spacing: 3px; color: #ff6666; margin: 10px 0;">
+                        ----- / ....- / .---- / --...
+                    </p>
+                    <p>纸条下方还写着一行字："它们…哀嚎"。</p>
+                    
+                    <p><strong>浏览记录（节选）：</strong></p>
+                    <p>15:23 - 收到邮件"您的培训回顾"<br>
+                    15:25 - 点击邮件链接，跳转至 carepets.org<br>
+                    16:40 - 访问"学员日志室"<br>
+                    17:55 - 页面停留超过2小时<br>
+                    04:00 - 访问"音频档案库"<br>
+                    04:17 - 活动终止</p>
+                    
+                    <p><strong>医学报告特殊发现：</strong></p>
+                    <p>耳道内有微量出血痕迹，听觉神经呈现异常刺激反应。法医推测死者生前听到了某种极端频率的声音。</p>
+                    
+                    <p><strong>个人物品：</strong></p>
+                    <p>在其工作服口袋中发现一张褪色的照片，照片中是该学院的"流浪动物管理中心"建筑，背面写着"2019年春"。</p>
+                </div>
+            </div>
+
+            <div class="file-card" onclick="toggleFile('fileC')">
+                <strong>📄 档案 C - 陈建国（动物医学讲师）</strong>
+                <p style="font-size: 0.9em; color: #00cc00; margin-top: 5px;">点击展开详细信息</p>
+                <div class="file-content" id="fileC">
+                    <p><strong>基本信息：</strong></p>
+                    <p>年龄：55岁 | 死亡地点：办公室 | 发现时间：2025.04.17 01:17</p>
+                    
+                    <p><strong>现场描述：</strong></p>
+                    <p>死者面对电脑屏幕，保持坐姿，双眼圆睁。电脑屏幕显示一个深绿色的页面，页面中央只有一行字："你还记得吗"。键盘旁有一瓶打翻的安眠药，但经检测死者体内并无药物成分。</p>
+                    
+                    <p><strong>职业履历关键信息：</strong></p>
+                    <p>2015-2019年担任学院"流浪动物管控项目"的技术顾问<br>
+                    2019年4月突然申请调离该项目<br>
+                    2019年5月至今，主要负责理论教学，不再参与实践项目</p>
+                    
+                    <p><strong>浏览记录（节选）：</strong></p>
+                    <p>22:30 - 搜索"carepets.org 删除记录"<br>
+                    22:45 - 访问 carepets.org<br>
+                    23:10 - 访问"内部档案 - 讲师专用通道"<br>
+                    23:55 - 停留在"培训报告审核"页面<br>
+                    00:40 - 下载多个文件（文件名包含日期2019.04）<br>
+                    01:15 - 访问"身份验证"页面<br>
+                    01:17 - 活动终止</p>
+                    
+                    <p><strong>办公室搜查发现：</strong></p>
+                    <p>在抽屉深处找到一份2019年的纸质报告，标题为《春季流浪动物处理效果评估》，报告中有多处修改痕迹。报告最后的签名处有死者的签字和日期：2019.04.17</p>
+                </div>
+            </div>
+
+            <h2>网络痕迹分析</h2>
+            <div class="document">
+                <div class="meta">
+                    技术部门报告 | 分析员：李工 | 时间：2025.04.17 02:30
+                </div>
+                <p><strong>域名信息：</strong></p>
+                <p>carepets.org - "关爱宠物公益组织"<br>
+                注册时间：2019年3月<br>
+                服务器位置：[已加密]<br>
+                网站描述：流浪动物管控培训与讲师认证平台</p>
+                
+                <p><strong>访问特征：</strong></p>
+                <p>该网站采用特殊的用户识别系统，曾访问过的用户会被分配一个4位数字编号。系统检测到三名死者均被识别为"回归用户"，他们的编号似乎与某个特定时间相关。</p>
+                
+                <p><strong>内容检测：</strong></p>
+                <p>初步扫描显示网站包含大量文档、日志、音频文件，但都采用了特殊的加密或隐藏方式。常规爬虫无法获取完整内容。</p>
+                
+                <p class="warning-static"><strong>安全警告：</strong><br>
+                该网站疑似具有某种心理暗示机制。建议调查人员在访问时保持警惕，并做好完整的浏览记录。</p>
+            </div>
+
+            <div class="puzzle-container">
+                <div class="puzzle-title">🔐 第一道解谜：密码破译</div>
+                <p>根据档案信息，访问 carepets.org 需要输入一个数字密码。</p>
+                
+                <p style="margin-top: 20px; color: #ff6666;">技术提示：这种点和横线的组合，在历史上曾用于远程通信...</p>
+                
+                <input type="text" id="passwordInput" placeholder="输入数字密码" maxlength="20">
+                <button onclick="checkPassword()">验证密码</button>
+                
+                </div>
+                
+                <p id="passwordFeedback" style="margin-top: 15px; font-weight: bold;"></p>
+            </div>
+        </div>
+
+        <!-- 第二章：CarePets 网站门户 -->
+        <div class="chapter" id="chapter2">
+            <h1>CarePets 关爱宠物公益组织</h1>
+            
+            <div class="system-text">
+                <p>[连接建立] 正在加载...</p>
+                <p>[身份识别] 检测到访问记录</p>
+                <p class="warning">[系统提示] 欢迎回来，用户 #0417</p>
+            </div>
+
+            <div class="narrative-text">
+                <p>页面加载完成。表面上是一个公益组织网站——深灰色背景，简洁的排版，顶部是一个抽象的动物剪影logo。</p>
+                <p>但你注意到，当你将鼠标移动到某些区域时，页面会短暂闪烁，绿色的代码字符一闪而过。</p>
+            </div>
+
+            <h2>主页内容</h2>
+            <div class="document">
+                <p style="font-size: 1.1em; text-align: center; margin-bottom: 20px;">
+                    <strong>让每一次培训都更温柔</strong>
+                </p>
+                
+                <p>CarePets成立于2019年，致力于推动文明、人道的流浪动物管控方法。我们相信，通过专业的培训和科学的管理，可以在保护公共安全的同时，给予这些生命应有的尊重。</p>
+                
+                <p><strong>我们的服务：</strong></p>
+                <ul style="margin-left: 30px; line-height: 2;">
+                    <li>流浪动物管控讲师培训与认证</li>
+                    <li>人道处理技术指导</li>
+                    <li>学员表现评估与档案管理</li>
+                    <li>内部经验交流与案例分享</li>
+                </ul>
+                
+                <p><strong>已培训讲师：</strong>847人<br>
+                <strong>学员总数：</strong>12,453人<br>
+                <strong>培训课时：</strong>98,764小时<br>
+                <strong>处理记录：</strong><span class="redacted">数据已删除</span></p>
+            </div>
+
+            <h2>系统导航</h2>
+            <div class="evidence-board">
+                <div class="evidence-item" onclick="showSection('about')">
+                    <strong>📘 关于我们</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">组织简介</p>
+                </div>
+                <div class="evidence-item" onclick="showSection('courses')">
+                    <strong>📚 培训课程</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">课程目录</p>
+                </div>
+                <div class="evidence-item" onclick="showSection('reviews')">
+                    <strong>⭐ 学员评价</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">反馈记录</p>
+                </div>
+                <div class="evidence-item" onclick="showSection('instructors')">
+                    <strong>👥 讲师认证</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">需要登录</p>
+                </div>
+                <div class="evidence-item" onclick="showSection('archive')">
+                    <strong>🗂️ 历史档案</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">需要权限</p>
+                </div>
+                <div class="evidence-item" onclick="showSection('contact')">
+                    <strong>📧 联系方式</strong>
+                    <p style="font-size: 0.85em; margin-top: 10px;">信息获取</p>
+                </div>
+            </div>
+
+            <div id="sectionContent"></div>
+
+            <div class="puzzle-container" style="margin-top: 40px;">
+                <div class="puzzle-title">🔐 第二道解谜：多重身份验证</div>
+                <p>系统检测到你是"用户 #0417"，但要访问内部区域，需要通过三重验证。</p>
+                
+                <div style="margin-top: 30px;">
+                    <p><strong>第一重验证：讲师编号（4位数字）</strong></p>
+                    
+                    <input type="text" id="verify1" placeholder="输入讲师编号" maxlength="4">
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <p><strong>第二重验证：培训批次代号（2个字母）</strong></p>
+                    
+                    <input type="text" id="verify2" placeholder="输入批次代号（大写字母）" maxlength="2">
+                </div>
+                
+                <div style="margin-top: 20px;">
+                    <p><strong>第三重验证：确认密语（一个单词）</strong></p>
+                    
+                    <input type="text" id="verify3" placeholder="输入密语（小写）">
+                </div>
+                
+                <button onclick="verifyAccess()" style="margin-top: 20px;">提交验证</button>
+                
+                
+                
+                <p id="verifyFeedback" style="margin-top: 15px; font-weight: bold;"></p>
+            </div>
+        </div>
+
+        <!-- 第三章：内部日志室 -->
+        <div class="chapter" id="chapter3">
+            <h1>内部日志室</h1>
+            
+            <div class="system-text">
+                <p>[访问已授权] 加载讲师内部区域...</p>
+                <p>[数据库查询] 用户 #0417 的历史记录</p>
+                <p class="warning-static">[异常] 检测到加密日志片段</p>
+            </div>
+
+            <div class="audio-wave">
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+                <div class="wave-bar"></div>
+            </div>
+            <p style="text-align: center; font-size: 0.9em; margin-bottom: 30px;">检测到背景音频信号...</p>
+
+            <div class="narrative-text">
+                <p>页面突然变暗了。绿色的文字变得更深，像是浸透了什么东西。</p>
+                <p>你听到了声音——不，是某种录音。很微弱，像是从很远的地方传来的。是犬吠声，但不对劲，声音中断，重复，像是被剪辑过。</p>
+            </div>
+
+            <h2>日志碎片</h2>
+            <div class="document">
+                <div class="meta">
+                    来源：学员操作记录 | 时间范围：2019.04-2019.05 | 加密级别：高
+                </div>
+                <p class="warning-static">以下内容经过时间戳加密，需要按正确顺序解读才能还原完整信息。</p>
+            </div>
+
+            <div class="email-thread">
+                <!-- 第三条：11:28 发现异常 -->
+                <div class="email">
+                    <div class="email-header">
+                        日志编号：L-████ | 时间戳：11:28:55<br>
+                        记录者：学员 #0417
+                    </div>
+                    <p>今天没有狗叫声。昨天的那些狗，他们说已经"转移"走了。</p>
+                    <p>但是我在设备间后面的区域，看到有人在挖土。很深的坑。</p>
+                    <p>笼子门坏了，没有人来修。讲师说不需要修了，"这一批已经结束"。</p>
+                </div>
+
+                <!-- 第五条：15:51 培训结束 -->
+                <div class="email">
+                    <div class="email-header">
+                        日志编号：L-████ | 时间戳：15:51:32<br>
+                        记录者：学员 #0417
+                    </div>
+                    <p>培训结束了。讲师给我们发了结业证书。</p>
+                    <p>证书上说我"表现优秀"，对流浪动物管控工作有"深刻理解"。</p>
+                    <p>我有什么理解。</p>
+                    <p>每天晚上，我都能听到声音。那些狗的声音。</p>
+                    <p>安静的叫声。</p>
+                </div>
+
+                <!-- 第二条：04:17 进入笼区 -->
+                <div class="email">
+                    <div class="email-header">
+                        日志编号：L-████ | 时间戳：04:17:23<br>
+                        记录者：学员 #0417
+                    </div>
+                    <p>门开了。笼子的门。</p>
+                    <p>讲师让我们进去。说是"近距离观察学习"。</p>
+                    <p>那些狗开始叫了。声音很大，很害怕的那种叫声。然后，突然，</p>
+                    <p>它们不叫了。</p>
+                    <p>很安静。</p>
+                    <p>我问为什么它们不叫了。讲师说："培训通过了。"</p>
+                    <p>什么培训？</p>
+                </div>
+
+                <!-- 第六条：08:20 真相觉醒 -->
+                <div class="email">
+                    <div class="email-header">
+                        日志编号：L-████ | 时间戳：08:20:41<br>
+                        记录者：学员 #0417
+                    </div>
+                    <p>他们究竟做了什么…</p>
+                    <p>而我…</p>
+                </div>
+
+                <!-- 第一条：19:42 初见 -->
+                <div class="email">
+                    <div class="email-header">
+                        日志编号：L-████ | 时间戳：19:42:07<br>
+                        记录者：学员 #0417
+                    </div>
+                    <p>今天是第三天。他们说这是"野外实操训练"。我们在一片空地上，周围用绿色的围栏围着。</p>
+                    <p>讲师说这些是流浪狗，会攻击人，所以需要"管控"。但我看那些狗只是怕人而已。</p>
+                    <p>有一群人在笑，不知道他们在笑什么。</p>
+                    <p>希望我能尽快融入吧！</p>
+                </div>
+
+                <!-- 第四条：23:03 修改报告 -->
+                <div class="email">
+                    <div class="email-header">
+                        日志编号：L-████ | 时间戳：23:03:18<br>
+                        记录者：学员 #0417
+                    </div>
+                    <p>我在整理报告。讲师让我把一些词改一改。</p>
+                    <p>我对"培训"产生了疑惑。</p>
+                    <p>我对"管理"产生了疑惑。</p>
+                    <p>我对"转移"产生了疑惑。</p>
+                    <p>但讲师说这样写报告，听起来更"专业"，更"人道"。</p>
+                    <p>我签字了。报告上写的日期是：2019年4月17日。</p>
+                    <p>那天笼子里很安静。</p>
+                </div>
+            </div>
+
+            <div class="puzzle-container" style="margin-top: 40px;">
+                <div class="puzzle-title">🔐 第三道解谜：时间线重构</div>
+                <p>这些日志片段被打乱了。你需要根据内容的逻辑关系和时间戳，将它们按<strong>事件发生的真实顺序</strong>重新排列。</p>
+                <p style="margin-top: 15px; font-size: 0.95em;">注意：时间戳可能被篡改过。你需要通过内容本身来判断真实的时间顺序。</p>
+                
+                <div style="margin-top: 30px;">
+                    <p><strong>请输入正确的日志顺序（用日志编号的时间戳小时数，例如：12-34-56-78-90-12）</strong></p>
+                    <p style="font-size: 0.9em; color: #00cc00; margin-top: 10px;">
+                        格式说明：六个时间戳的小时数，用短横线连接<br>
+                        例如：第一条日志19:42:07 → 取小时数"19"
+                    </p>
+                    <input type="text" id="timelineInput" placeholder="输入完整序列">
+                    <button onclick="checkTimeline()">验证时间线</button>
+                </div>
+                
+                
+                
+                <p id="timelineFeedback" style="margin-top: 15px; font-weight: bold;"></p>
+            </div>
+        </div>
+
+        <!-- 第四章：深层档案 -->
+        <div class="chapter" id="chapter4">
+            <h1>深层档案 - 绝密访问</h1>
+            
+            <div class="system-text">
+                <p>[警告] 您正在访问受限区域</p>
+                <p>[加密] 讲师专用档案库</p>
+                <p class="warning-static">[监控] 此访问将被记录</p>
+            </div>
+
+            <div class="narrative-text">
+                <p>页面的颜色越来越深了。你感觉这不再是一个普通的网站。</p>
+                <p>背景音频变得更清晰了——不是犬吠，而是一种低沉的呼吸声。重复的，机械的。</p>
+                <p>你意识到：这些声音不是来自录音，而是来自<span class="warning-static">你的背后</span>。</p>
+            </div>
+
+            <h2>讲师内部通讯记录</h2>
+            
+            <div class="email-thread">
+                <div class="email">
+                    <div class="email-header">
+                        主题：关于报告措辞的统一要求<br>
+                        发件人：管理部 - 陈建国<br>
+                        收件人：全体培训讲师<br>
+                        日期：2019年4月16日
+                    </div>
+                    <p>各位讲师：</p>
+                    <p>为提升项目的专业形象，从即日起，所有对外报告和学员反馈中的措辞需要统一修改：</p>
+                    <div style="background: rgba(0,0,0,0.5); padding: 15px; margin: 10px 0; border: 1px dashed #00ff00; cursor: pointer;" onclick="revealWordChanges(this)">
+                        <p style="color: #666; text-align: center;">[ 点击解密措辞修改表 ]</p>
+                    </div>
+                    <p>请各位务必执行，这关系到项目能否继续获得资金支持。</p>
+                    <p>——陈建国</p>
+                </div>
+
+                <div class="email">
+                    <div class="email-header">
+                        主题：回复：笼区门损坏问题<br>
+                        发件人：维修部<br>
+                        收件人：陈建国<br>
+                        日期：2019年4月18日
+                    </div>
+                    <p>陈老师：</p>
+                    <p>关于您报告的笼区门损坏问题，我已安排人员查看。但是现场工人反馈说，那个区域的味道太重了，不愿意进去修理。</p>
+                    <p>另外，他们说看到地上有很多<span class="redacted">血迹和毛发</span>，问这是什么情况。</p>
+                    <p>我该怎么和他们解释？</p>
+                </div>
+
+                <div class="email">
+                    <div class="email-header">
+                        主题：回复：笼区门损坏问题<br>
+                        发件人：陈建国<br>
+                        收件人：维修部<br>
+                        日期：2019年4月18日
+                    </div>
+                    <p>不用修了。</p>
+                    <p>那批"培训"已经结束。</p>
+                    <p>让清洁工把那个区域封闭起来，对外说是"设施维护中"。</p>
+                    <p>记住，什么都不要多问。</p>
+                </div>
+
+                <div class="email">
+                    <div class="email-header">
+                        主题：紧急 - 学员0417的情况<br>
+                        发件人：李慧敏（校务处）<br>
+                        收件人：陈建国<br>
+                        日期：2019年4月19日
+                    </div>
+                    <p>老陈：</p>
+                    <p>那个编号0417的学员，最近表现不太对。他总是去那个已经封闭的笼区附近徘徊，还问我"那些狗去哪了"。</p>
+                    <p>我按照你说的回答他"已经转移到其他城市的收容所了"，但他好像不相信。</p>
+                    <p>昨天他问我能不能看看"转移记录"。我说记录在你那里。</p>
+                    <p>你看这事怎么处理？要不要让他别再参与后续项目了？</p>
+                </div>
+
+                <div class="email">
+                    <div class="email-header">
+                        主题：回复：紧急 - 学员0417的情况<br>
+                        发件人：陈建国<br>
+                        收件人：李慧敏（校务处）<br>
+                        日期：2019年4月19日
+                    </div>
+                    <p>不用担心。</p>
+                    <p>让他签培训合格报告。一旦签了字，他就是"参与者"，不会乱说的。</p>
+                    <p>而且，我们的报告写得很"专业"，没有任何问题。</p>
+                    <p>如果有人查，所有文件都显示我们进行的是"文明、人道的流浪动物管控培训"。</p>
+                    <p>放心吧。</p>
+                </div>
+            </div>
+
+            <h2>机密文档：2019年春季行动记录</h2>
+            <div class="document">
+                <div class="meta">
+                    分类：内部存档 | 加密等级：最高 | 访问限制：讲师以上
+                </div>
+                <p class="warning-static">本文档包含敏感信息，严禁外传</p>
+                
+                <p><strong>行动代号：</strong>SpringClean-2019</p>
+                <p><strong>执行时间：</strong>2019年4月1日 - 4月30日</p>
+                <p><strong>任务目标：</strong>处理校园及周边流浪动物，数量约<span class="redacted">200-300只</span></p>
+                
+                <p><strong>执行方案：</strong></p>
+                <p>1. 将流浪动物集中到笼区（草地后方的封闭区域）<br>
+                2. 对外宣传为"人道培训"项目<br>
+                3. 招募学员参与，增加行动的"教育意义"<br>
+                4. 实际采用<span class="redacted">批量处理方式</span><br>
+                5. 处理后统一掩埋于<span class="redacted">设备间后方的深坑</span></p>
+                
+                <p><strong>关键日期：</strong></p>
+                <p>4月17日 - 最大规模处理日，学员0417在场<br>
+                该日笼区门故障，导致学员近距离目击全过程<br>
+                事后已要求学员签署"培训通过"报告</p>
+                
+                <p><strong>结果统计：</strong></p>
+                <p>处理数量：<span class="redacted">287只</span><br>
+                费用支出：<span class="redacted">￥42,000</span><br>
+                学员人数：<span class="redacted">45人</span><br>
+                "培训通过"率：100%</p>
+                
+                <p class="warning-static"><strong>后续追踪：</strong></p>
+                <p>笼区已封闭，对外称"维护中"<br>
+                所有文字记录已按规定修改措辞<br>
+                学员0417行为有异常，持续观察中<br>
+                如有举报风险，启动"集体责任"预案</p>
+            </div>
+
+            <div class="narrative-text" style="margin-top: 40px;" id="revelationText">
+                <!-- 此文本将通过滚动触发显示 -->
+                <div id="revelationContent" style="min-height: 200px;"></div>
+            </div>
+
+            <div class="puzzle-container" id="puzzle4Container" style="margin-top: 40px; display: none;">
+                <div class="puzzle-title">🔐 第四道解谜：加密信息解码</div>
+                <p>档案中有些信息被加密了（显示为黑色遮挡）。系统要求输入一个6位的密码来访问完整的真相报告。</p>
+                <p style="margin-top: 15px; color: #00cc00;">提示：关键日期</p>
+                
+                <input type="text" id="decodeInput" placeholder="输入6位密码" maxlength="6">
+                <button onclick="checkDecode()">解码档案</button>
+                
+                
+                
+                <p id="decodeFeedback" style="margin-top: 15px; font-weight: bold;"></p>
+            </div>
+        </div>
+
+        <!-- 第五章：反问与审判 -->
+        <div class="chapter" id="chapter5">
+            <h1>身份确认 - 最终验证</h1>
+            
+            <div class="system-text">
+                <p class="warning-static">[系统响应] 真相档案已解锁</p>
+                <p>[状态变更] 从"调查员"转换为"被调查者"</p>
+                <p class="warning">[通知] 报应模式准备中...</p>
+            </div>
+
+            <div class="narrative-text">
+                <p>屏幕突然黑了一下。再亮起时，字体变成了深红色。</p>
+                <p>你听到的不再是犬吠，而是无数重叠的呼吸声。它们围绕着你，越来越近。</p>
+                <p>页面上出现了一行字：</p>
+                <p class="warning-static" style="text-align: center; font-size: 1.5em; margin: 30px 0;">
+                    "你还记得那天吗，0417？"
+                </p>
+            </div>
+
+            <h2>未加密的真相记录</h2>
+            <div class="document" style="border-color: #ff3333;">
+                <div class="meta" style="color: #ff3333;">
+                    2019年4月17日 - 笼区内部监控记录（已恢复）
+                </div>
+                
+                <p><strong>04:17 AM - 笼区门故障，自动开启</strong></p>
+                <p>学员0417进入封闭区域。此时区域内有待处理犬只约40只，均处于清醒状态。</p>
+                
+                <p><strong>04:18 AM - 近距离接触</strong></p>
+                <p>学员0417看到了实际情况：<br>
+                - 笼子里堆积的犬只，部分已经死亡<br>
+                - 角落里的"处理工具"：毒针、电击棒、金属棍<br>
+                - 地面上的血迹和排泄物<br>
+                - 空气中的刺鼻气味<br>
+                - 那些还活着的狗，发出的绝望叫声</p>
+                
+                <p><strong>04:22 AM - 试图呼救</strong></p>
+                <p>学员0417退出笼区，寻找讲师。但讲师告诉他：<br>
+                "这就是培训内容。我们在进行流浪动物管控。"<br>
+                "你已经参与了，所以你也是团队成员。"<br>
+                "报告需要你签字，这样才能证明培训合格。"</p>
+                
+                <p><strong>04:35 AM - 报告签署</strong></p>
+                <p>在讲师的要求下，学员0417签署了培训报告。报告中所有真实描述都被替换为美化措辞：<br>
+                - "扑杀" → "培训"<br>
+                - "死亡" → "转移"<br>
+                - "掩埋" → "安置"</p>
+                
+                <p class="warning-static"><strong>签字意味着：</strong><br>
+                你承认这是一次"成功的人道培训"<br>
+                你成为了这场暴行的见证者和背书人<br>
+                你的沉默，等同于共谋</p>
+            </div>
+
+            <div class="document" style="border-color: #ff3333; margin-top: 30px;">
+                <div class="meta" style="color: #ff3333;">
+                    后续追踪：学员0417的六年
+                </div>
+                
+                <p><strong>2019年5月 - 2025年3月：</strong></p>
+                <p>学员0417从未举报此事。<br>
+                他继续在学院工作，从未提起那个笼区。<br>
+                他把那份报告锁在抽屉里，再也没有打开。<br>
+                他告诉自己："我只是学员，我没有选择。"<br>
+                他试图忘记。</p>
+                
+                <p><strong>2025年4月：</strong></p>
+                <p>三名培训项目的核心人员相继死亡。<br>
+                他们都在死前访问了carepets.org<br>
+                他们都看到了那些被掩盖的真相。</p>
+                
+                <p class="warning-static"><strong>而你，</strong></p>
+                <p>你以为自己是调查员，<br>
+                其实你一直都是<strong>被调查者</strong>。</p>
+                
+                <p>你打开这个网站，<br>
+                不是为了查案，<br>
+                而是因为<strong>它们</strong>让你来的。</p>
+                
+                <p>那287条生命，<br>
+                它们记得你。</p>
+            </div>
+
+            <h2>最终问询</h2>
+            <div class="puzzle-container" style="border-color: #ff3333;">
+                <div class="puzzle-title" style="color: #ff3333;">⚖️ 道德审判</div>
+                <p>现在，轮到你回答问题了。</p>
+                <p style="margin-top: 20px; font-size: 0.95em; color: #ff6666;">
+                    提示：你的回答将决定最终结局。没有"正确答案"。
+                </p>
+            </div>
+
+            <div id="questionArea" style="margin-top: 30px;">
+                <!-- 问题将动态生成 -->
+            </div>
+        </div>
+
+        <!-- 第六章：结局 -->
+        <div class="chapter" id="chapter6">
+            <div class="ending-screen" id="endingContent">
+                <!-- 动态生成结局 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== 开场打字机动画 ====================
+        
+        const bootLines = [
+            { id: 'line1', text: '[系统启动] 警务数据库 v7.2.1', delay: 0 },
+            { id: 'line2', text: '[权限验证] 调查员访问已授权', delay: 800 },
+            { id: 'line3', text: '[日期] 2025年4月17日 - 03:47:22', delay: 1600 },
+            { id: 'line4', text: '[警告] 案件群组 Ω 被标记为"异常关联"', delay: 2400 },
+            { id: 'line5', text: '[加载] 案件档案系统...', delay: 3200 },
+            { id: 'line6', text: '[就绪] 系统初始化完成', delay: 4500 }
+        ];
+
+        let bootAnimationComplete = false;
+
+        // 打字机效果函数
+        function typeWriter(element, text, speed = 50) {
+            return new Promise((resolve) => {
+                let i = 0;
+                const cursor = element.querySelector('.cursor');
+                if (cursor) cursor.style.display = 'inline-block';
+                
+                element.style.opacity = '1';
+                element.classList.add('typing');
+                
+                function type() {
+                    if (i < text.length) {
+                        const textNode = element.childNodes[0];
+                        if (textNode) {
+                            textNode.textContent = text.substring(0, i + 1);
+                        } else {
+                            element.insertBefore(document.createTextNode(text.substring(0, i + 1)), element.firstChild);
+                        }
+                        i++;
+                        setTimeout(type, speed);
+                    } else {
+                        if (cursor) cursor.style.display = 'none';
+                        resolve();
+                    }
+                }
+                type();
+            });
+        }
+
+        // 播放打字机音效
+        function playTypeSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'square';
+            oscillator.frequency.value = 800;
+            
+            const now = audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0.05, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.05);
+        }
+
+        // 初始化开场动画
+        async function initBootAnimation() {
+            for (const line of bootLines) {
+                await new Promise(resolve => setTimeout(resolve, line.delay));
+                const element = document.getElementById(line.id);
+                await typeWriter(element, line.text, 40);
+                
+                // 每打完一行，播放一个确认音
+                if (audioContext) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.frequency.value = 1200;
+                    gain.gain.value = 0.1;
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 0.1);
+                }
+            }
+            
+            bootAnimationComplete = true;
+        }
+
+        // 开始游戏
+        function startGame() {
+            // 初始化音频
+            initAudio();
+            
+            // 播放启动音效
+            if (audioContext) {
+                playGlitchSound();
+            }
+            
+            // 隐藏开场界面
+            const bootScreen = document.getElementById('bootScreen');
+            bootScreen.style.animation = 'fadeOut 1s';
+            setTimeout(() => {
+                bootScreen.classList.add('hidden');
+            }, 1000);
+        }
+
+        // 页面加载后自动播放开场动画
+        window.addEventListener('DOMContentLoaded', () => {
+            // 延迟一点开始，让用户有反应时间
+            setTimeout(() => {
+                initBootAnimation();
+            }, 500);
+        });
+
+        // 添加淡出动画
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // ==================== 音频系统 ====================
+        
+        let audioContext;
+        let backgroundNoise;
+        let breathingSound;
+        let isAudioInitialized = false;
+
+        // 初始化音频上下文（需要用户交互）
+        function initAudio() {
+            if (isAudioInitialized) return;
+            
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            isAudioInitialized = true;
+            
+            // 开始播放环境音
+            playAmbientSound();
+        }
+
+        // 环境音效（低频噪音）
+        function playAmbientSound() {
+            if (!audioContext) return;
+            
+            const bufferSize = audioContext.sampleRate * 2;
+            const buffer = audioContext.createBuffer(1, bufferSize, audioContext.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // 生成低频噪音
+            for (let i = 0; i < bufferSize; i++) {
+                data[i] = (Math.random() * 2 - 1) * 0.02; // 很轻的白噪音
+            }
+            
+            backgroundNoise = audioContext.createBufferSource();
+            backgroundNoise.buffer = buffer;
+            backgroundNoise.loop = true;
+            
+            const filter = audioContext.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 200; // 只保留低频
+            
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0.1; // 很低的音量
+            
+            backgroundNoise.connect(filter);
+            filter.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            backgroundNoise.start(0);
+        }
+
+        // 呼吸声效果
+        function playBreathingSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 80; // 低频
+            
+            // 呼吸节奏的音量变化
+            const now = audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0, now);
+            gainNode.gain.linearRampToValueAtTime(0.08, now + 1.5);
+            gainNode.gain.linearRampToValueAtTime(0, now + 3);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 3);
+        }
+        
+        // 持续播放呼吸声
+        function startBreathingLoop() {
+            if (!audioContext || !isAudioInitialized) return;
+            
+            // 清除旧的循环
+            if (window.breathingInterval) {
+                clearInterval(window.breathingInterval);
+            }
+            
+            // 立即播放一次
+            playBreathingSound();
+            
+            // 每4秒循环
+            window.breathingInterval = setInterval(() => {
+                if (currentChapter >= 3 && currentChapter <= 5) {
+                    playBreathingSound();
+                } else {
+                    clearInterval(window.breathingInterval);
+                }
+            }, 4000);
+        }
+
+
+        // 犬吠声效果
+        function playDogBarkSound() {
+            if (!audioContext) return;
+            
+            const oscillator1 = audioContext.createOscillator();
+            const oscillator2 = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator1.type = 'sawtooth';
+            oscillator1.frequency.value = 150;
+            oscillator2.type = 'square';
+            oscillator2.frequency.value = 120;
+            
+            const now = audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0.15, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            
+            oscillator1.connect(gainNode);
+            oscillator2.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator1.start(now);
+            oscillator2.start(now);
+            oscillator1.stop(now + 0.15);
+            oscillator2.stop(now + 0.15);
+        }
+        // 故障音效
+        function playGlitchSound() {
+            if (!audioContext) return;
+            
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.type = 'square';
+            oscillator.frequency.value = Math.random() * 1000 + 200;
+            
+            const now = audioContext.currentTime;
+            gainNode.gain.setValueAtTime(0.3, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+        }
+
+        // 低频轰鸣（恐怖氛围）
+        function playDroneSound() {
+            if (!audioContext) return;
+            
+            const oscillator1 = audioContext.createOscillator();
+            const oscillator2 = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator1.type = 'sine';
+            oscillator1.frequency.value = 55; // 低音A
+            oscillator2.type = 'sine';
+            oscillator2.frequency.value = 58; // 稍微不和谐的频率
+            
+            gainNode.gain.value = 0.15;
+            
+            oscillator1.connect(gainNode);
+            oscillator2.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            const now = audioContext.currentTime;
+            oscillator1.start(now);
+            oscillator2.start(now);
+            oscillator1.stop(now + 5);
+            oscillator2.stop(now + 5);
+        }
+
+        // ==================== 全局变量 ====================
+        
+        let currentChapter = 1;
+        let startTime = Date.now();
+        let collectedClues = [];
+        let userChoices = [];
+        let questionCount = 0;
+
+        // ==================== 二次访问检测 ====================
+        
+        // 页面加载时检查是否二次访问
+        window.addEventListener('DOMContentLoaded', function() {
+            const hasVisited = localStorage.getItem('omega_visited');
+            if (hasVisited) {
+                // 二次访问，在开场动画结束后显示提示
+                setTimeout(() => {
+                    const bootPrompt = document.getElementById('bootPrompt');
+                    if (bootPrompt) {
+                        const returnLine = document.createElement('p');
+                        returnLine.style.color = '#ff6666';
+                        returnLine.style.marginTop = '20px';
+                        returnLine.style.fontSize = '1.1em';
+                        returnLine.style.animation = 'blink 1s infinite';
+                        bootPrompt.insertBefore(returnLine, bootPrompt.firstChild);
+                        returnLine.textContent = '[系统] 你又来了...';
+                    }
+                }, 6500);
+            }
+            // 标记访问
+            localStorage.setItem('omega_visited', 'true');
+        });
+
+        // ==================== 工具函数 ====================
+        
+        function updateProgress() {
+            const progress = ((currentChapter - 1) / 5) * 100;
+            document.getElementById('progress').style.width = progress + '%';
+        }
+
+
+        // 切换线索面板
+        function toggleInventory() {
+            const panel = document.getElementById('inventoryPanel');
+            panel.classList.toggle('open');
+        }
+        
+        // 收集新线索时自动打开面板
+        const originalAddClue = addClue;
+        addClue = function(clue) {
+            originalAddClue(clue);
+            const panel = document.getElementById('inventoryPanel');
+            panel.classList.add('open');
+            // 3秒后自动收起
+            setTimeout(() => {
+                panel.classList.remove('open');
+            }, 3000);
+        };
+
+        function goToChapter(num) {
+            document.querySelectorAll('.chapter').forEach(ch => ch.classList.remove('active'));
+            document.getElementById('chapter' + num).classList.add('active');
+            currentChapter = num;
+            updateProgress();
+            window.scrollTo(0, 0);
+            
+            // 第6章隐藏线索框
+            const inventory = document.getElementById('inventoryPanel');
+            const toggle = document.getElementById('inventoryToggle');
+            if (num === 6) {
+                if (inventory) inventory.style.display = 'none';
+                if (toggle) toggle.classList.add('hidden');
+            } else {
+                if (inventory) inventory.style.display = 'block';
+                if (toggle) toggle.classList.remove('hidden');
+            }
+            
+            // 音频效果
+            if (num === 2) {
+                playGlitchSound();
+            }
+            if (num === 3) {
+                startBreathingLoop(); // 开始呼吸声循环
+            }
+            if (num === 4) {
+                playDroneSound(); // 低频轰鸣
+                setTimeout(playDogBarkSound, 500); // 犬吠
+            }
+            if (num === 5) {
+                playDroneSound();
+                setTimeout(playGlitchSound, 500);
+            }
+            
+            // 特殊章节的初始化
+            if (num === 5) initQuestions();
+            if (num === 6) showEnding();
+        }
+
+        function addClue(clue) {
+            if (!collectedClues.includes(clue)) {
+                collectedClues.push(clue);
+                updateInventory();
+            }
+        }
+
+        // 揭示措辞修改表（恐怖效果）
+        function revealWordChanges(element) {
+            element.style.cursor = 'not-allowed';
+            element.innerHTML = `
+                <p style="color: #ff3333; margin-bottom: 10px; text-align: center;">[ 解密中...]</p>
+                <div id="wordReveal"></div>
+            `;
+            
+            const words = [
+                '"处理" → "培训"',
+                '"扑杀" → "管理"',
+                '"死亡" → "转移"',
+                '"掩埋" → "处置"',
+                '"叫声" → "反应"'
+            ];
+            
+            let index = 0;
+            const revealDiv = document.getElementById('wordReveal');
+            
+            const revealInterval = setInterval(() => {
+                if (index < words.length) {
+                    const line = document.createElement('p');
+                    line.textContent = words[index];
+                    line.style.color = '#ff6666';
+                    line.style.margin = '5px 0';
+                    line.style.opacity = '0';
+                    line.style.transition = 'opacity 0.5s';
+                    revealDiv.appendChild(line);
+                    
+                    setTimeout(() => line.style.opacity = '1', 50);
+                    
+                    // 播放揭示音效
+                    if (audioContext) {
+                        playGlitchSound();
+                    }
+                    
+                    index++;
+                } else {
+                    clearInterval(revealInterval);
+                }
+            }, 800);
+        }
+
+        function updateInventory() {
+            const inv = document.getElementById('inventoryItems');
+            if (collectedClues.length === 0) {
+                inv.innerHTML = '<p style="opacity: 0.5; font-size: 0.85em;">暂无线索...</p>';
+            } else {
+                inv.innerHTML = collectedClues.map(clue => 
+                    `<div class="inventory-item">${clue}</div>`
+                ).join('');
+            }
+        }
+
+        function toggleFile(id) {
+            const file = document.getElementById(id);
+            file.classList.toggle('visible');
+        }
+
+        
+
+        function showFeedback(elementId, message, isSuccess) {
+            const elem = document.getElementById(elementId);
+            elem.textContent = message;
+            elem.style.color = isSuccess ? '#33ff33' : '#ff3333';
+            if (isSuccess) {
+                elem.style.animation = 'none';
+                setTimeout(() => elem.style.animation = 'blink 0.5s', 10);
+            }
+        }
+
+        // 计时器
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            const minutes = Math.floor(elapsed / 60).toString().padStart(2, '0');
+            const seconds = (elapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timer').textContent = minutes + ':' + seconds;
+
+            // 时间效果
+            if (elapsed > 600) { // 10分钟后
+                document.body.style.filter = 'hue-rotate(20deg)';
+            }
+            if (elapsed > 900) { // 15分钟后
+                document.getElementById('staticEffect').style.opacity = '0.08';
+            }
+        }, 1000);
+
+        // ==================== 第一章 ====================
+        
+        function checkPassword() {
+            const password = document.getElementById('passwordInput').value.trim();
+            
+            if (password === '0417') {
+                // 初始化音频（需要用户交互）
+                initAudio();
+                
+                addClue('🔑 初始密码：0417（关键日期）');
+                showFeedback('passwordFeedback', '✓ 密码正确！系统正在建立连接...', true);
+                
+                setTimeout(() => {
+                    document.body.style.animation = 'glitch 0.3s';
+                    playGlitchSound(); // 播放故障音效
+                    setTimeout(() => {
+                        document.body.style.animation = '';
+                        goToChapter(2);
+                    }, 300);
+                }, 1500);
+            } else {
+                showFeedback('passwordFeedback', '✗ 密码错误。再仔细看看档案中的符号和未完成的备忘录...', false);
+            }
+        }
+
+        // ==================== 第二章 ====================
+        
+        const sections = {
+            about: `
+                <h2>关于我们</h2>
+                <div class="document">
+                    <p>CarePets成立于2019年3月，总部位于[已删除]。</p>
+                    <p><strong>我们的理念：</strong></p>
+                    <p>"在保护公共安全的前提下，以最高效的方式处理流浪动物问题。我们的座右铭是：<em>Ruhe</em>（还生命以安静）。我们相信，真正的人道，是让一切都在悄无声息中完成。"</p>
+                    <p>我们的核心团队由经验丰富的动物医学专家组成，其中首席讲师陈建国教授拥有超过20年的动物管控经验。</p>
+                </div>
+            `,
+            courses: `
+                <h2>培训课程</h2>
+                <div class="document">
+                    <p><strong>基础课程：</strong></p>
+                    <p>1. 流浪动物识别与评估（3课时）<br>
+                    2. 捕获技术与工具使用（5课时）<br>
+                    3. "处理"流程与安全规范（8课时）<br>
+                    4. 报告撰写与措辞技巧（2课时）</p>
+                    
+                    <p><strong>实操训练：</strong></p>
+                    <p>学员将在专业讲师指导下，参与真实的管控项目。我们提供安全的封闭场地，确保学习过程顺利进行。</p>
+                    
+                    <p><strong>历史批次：</strong></p>
+                    <p>2019年春季批次（代号：SA-Spring-Animalia）<br>
+                    2019年秋季批次（代号：FA-Fall-Animalia）<br>
+                    2020年春季批次（代号：SB-Spring-Beta）</p>
+                </div>
+            `,
+            reviews: `
+                <h2>学员评价</h2>
+                <div class="email-thread">
+                    <div class="email">
+                        <div class="email-header">学员 #0156 - 2019年5月</div>
+                        <p>"培训很专业，讲师很有耐心。虽然过程有点不太舒服，但我理解，工作需要嘛。"</p>
+                    </div>
+                    <div class="email">
+                        <div class="email-header">学员 #0203 - 2019年6月</div>
+                        <p>"第一次看到那个场面，我以为自己会受不了。但讲师说这是'必要的'，而且报告都很专业，听起来确实没问题。"</p>
+                    </div>
+                    <div class="email">
+                        <div class="email-header">学员 #0417 - 2019年4月</div>
+                        <p>"我签字了。不知道为什么要我签字。"</p>
+                    </div>
+                </div>
+            `,
+            instructors: `
+                <h2>讲师认证</h2>
+                <div class="document">
+                    <p class="warning-static">[需要验证] 此区域仅限认证讲师访问</p>
+                    <p><strong>已认证讲师名单：</strong></p>
+                    <p>陈建国 - 编号：2019<br>
+                    李慧敏 - 编号：2020<br>
+                    王建强 - 编号：2021<br>
+                    ...</p>
+                    
+                    <p><strong>讲师权限：</strong></p>
+                    <p>- 查看学员完整档案<br>
+                    - 访问内部日志系统<br>
+                    - 修改报告措辞<br>
+                    - 下载历史记录</p>
+                </div>
+            `,
+            archive: `
+                <h2>历史档案</h2>
+                <div class="document">
+                    <p class="warning-static">[加密访问] 需要批次代号验证</p>
+                    <p><strong>可用档案：</strong></p>
+                    <p>2019年春季批次（SA）- 45名学员，287次"处理"<br>
+                    2019年秋季批次（FA）- 38名学员，215次"处理"<br>
+                    2020年春季批次（SB）- 52名学员，341次"处理"</p>
+                    
+                    <p style="font-size: 0.9em; color: #00cc00; margin-top: 20px;">
+                        注：批次代号格式为两个大写字母，代表季节和项目名称的首字母。
+                    </p>
+                </div>
+            `,
+            contact: `
+                <h2>联系方式</h2>
+                <div class="document">
+                    <p><strong>组织名称：</strong>CarePets 关爱宠物公益组织</p>
+                    <p><strong>核心理念：</strong>Ruhe（还生命以安静）</p>
+                    <p><strong>主管部门：</strong>[已删除]</p>
+                    <p><strong>联系方式：</strong>[已删除]</p>
+                    <p class="warning-static">注：本组织已于2020年后停止公开活动，网站仅作档案用途。</p>
+                </div>
+            `
+        };
+
+        function showSection(sectionName) {
+            const content = sections[sectionName];
+            if (content) {
+                document.getElementById('sectionContent').innerHTML = content;
+                
+                // 不再自动收集线索，改为需要玩家点击
+                // 线索会通过页面内的可点击元素来收集
+            }
+        }
+
+        function verifyAccess() {
+            const v1 = document.getElementById('verify1').value.trim();
+            const v2 = document.getElementById('verify2').value.trim().toUpperCase();
+            const v3 = document.getElementById('verify3').value.trim().toLowerCase();
+            
+            let errors = [];
+            
+            if (v1 !== '2019') {
+                errors.push('讲师编号错误（提示：查看"讲师认证"）');
+            }
+            if (v2 !== 'SA') {
+                errors.push('批次代号错误（提示：批次的代号）');
+            }
+            if (v3 !== 'ruhe') {
+                errors.push('密语错误（提示：外语词）');
+            }
+            
+            if (errors.length === 0) {
+                addClue('✅ 三重验证：2019-SA-Ruhe');
+                showFeedback('verifyFeedback', '✓ 验证通过！正在进入内部系统...', true);
+                
+                setTimeout(() => {
+                    document.body.style.background = 'radial-gradient(circle, #0a0a0a, #000000)';
+                    goToChapter(3);
+                }, 2000);
+            } else {
+                showFeedback('verifyFeedback', '✗ 验证失败：\n' + errors.join('\n'), false);
+            }
+        }
+
+        // ==================== 第三章 ====================
+        
+        function checkTimeline() {
+            const input = document.getElementById('timelineInput').value.trim();
+            // 正确顺序：初见(19) → 进入笼区(04) → 发现异常(11) → 修改报告(23) → 培训结束(15) → 觉醒(08)
+            const correct = '19-04-11-23-15-08';
+            
+            if (input === correct) {
+                addClue('📝 真实时间线已还原');
+                showFeedback('timelineFeedback', '✓ 时间线正确！真相正在浮现...', true);
+                
+                setTimeout(() => {
+                    document.body.style.filter = 'brightness(0.8)';
+                    alert('你听见了吗，0417？\n\n那些声音...\n它们从未离开。');
+                    goToChapter(4);
+                }, 2000);
+            } else {
+                showFeedback('timelineFeedback', '✗ 顺序错误。仔细阅读每条日志的内容，按事件发生的逻辑顺序排列。', false);
+            }
+        }
+
+        // ==================== 第四章 ====================
+        
+        function checkDecode() {
+            const input = document.getElementById('decodeInput').value.trim();
+            // 答案：19 + 04 + 17 = 190417
+            
+            if (input === '190417') {
+                addClue('🔓 完整密码：190417（2019年4月17日）');
+                showFeedback('decodeFeedback', '✓ 解码成功！档案已完全解锁...', true);
+                
+                setTimeout(() => {
+                    document.body.style.background = '#0a0000';
+                    document.body.style.color = '#ff6666';
+                    
+                    setTimeout(() => {
+                        alert('报应模式——启动。\n\n你以为你在调查案件。\n其实，你就是案件本身。');
+                        goToChapter(5);
+                    }, 2000);
+                }, 2000);
+            } else {
+                showFeedback('decodeFeedback', '✗ 密码错误。密码是6位数字，由年份后两位、月份、日期组成。', false);
+            }
+        }
+
+        // ==================== 第五章 ====================
+        
+        function initQuestions() {
+            questionCount = 1;
+            showQuestion1();
+        }
+
+        function showQuestion1() {
+            document.getElementById('questionArea').innerHTML = `
+                <div class="document" style="border-color: #ff3333;">
+                    <p style="font-size: 1.2em; margin-bottom: 20px;"><strong>问题 1：</strong></p>
+                    <p>2019年4月17日，你在笼区看到了什么？</p>
+                    <p style="font-size: 0.9em; color: #ff6666; margin-top: 10px;">这是你第一次可以说出真相的机会。</p>
+                    
+                    <button class="choice-button" onclick="answer(1, 'truth')">
+                        我看到了真相。那不是培训，那是屠杀。
+                    </button>
+                    <button class="choice-button" onclick="answer(1, 'deny')">
+                        我不记得了。那只是一次正常的培训。
+                    </button>
+                    <button class="choice-button" onclick="answer(1, 'excuse')">
+                        我只是学员，我什么都不知道。
+                    </button>
+                </div>
+                <p id="response1" style="margin-top: 20px; font-size: 1.1em;"></p>
+            `;
+        }
+
+        function showQuestion2() {
+            document.getElementById('questionArea').innerHTML += `
+                <div class="document" style="border-color: #ff3333; margin-top: 30px;">
+                    <p style="font-size: 1.2em; margin-bottom: 20px;"><strong>问题 2：</strong></p>
+                    <p>你签署了那份报告。你把"扑杀"改成了"培训"，把"死亡"改成了"转移"。</p>
+                    <p>这六年来，你为什么不说出真相？</p>
+                    
+                    <button class="choice-button" onclick="answer(2, 'fear')">
+                        我害怕。我怕失去工作，怕被牵连。
+                    </button>
+                    <button class="choice-button" onclick="answer(2, 'complicit')">
+                        因为我签了字，我也是共犯。
+                    </button>
+                    <button class="choice-button" onclick="answer(2, 'forget')">
+                        我试图忘记那一切。
+                    </button>
+                </div>
+                <p id="response2" style="margin-top: 20px; font-size: 1.1em;"></p>
+            `;
+        }
+
+        function showQuestion3() {
+            document.getElementById('questionArea').innerHTML += `
+                <div class="document" style="border-color: #ff3333; margin-top: 30px;">
+                    <p style="font-size: 1.2em; margin-bottom: 20px;"><strong>问题 3：</strong></p>
+                    <p>287条生命。它们在笼子里，安静地死去。</p>
+                    <p>你觉得，它们会原谅你吗？</p>
+                    
+                    <button class="choice-button" onclick="answer(3, 'no')">
+                        不会。我不配被原谅。
+                    </button>
+                    <button class="choice-button" onclick="answer(3, 'hope')">
+                        我希望它们能原谅我，虽然我知道这不可能。
+                    </button>
+                    <button class="choice-button" onclick="answer(3, 'justify')">
+                        我只是做了我被要求做的事。
+                    </button>
+                </div>
+                <p id="response3" style="margin-top: 20px; font-size: 1.1em;"></p>
+            `;
+        }
+
+        function answer(qNum, choice) {
+            userChoices.push(choice);
+            
+            const response = document.getElementById('response' + qNum);
+            response.style.color = '#ff3333';
+            response.style.textAlign = 'center';
+            response.textContent = '我们知道。';
+            
+            // 文字逐渐变大效果
+            let fontSize = 1.1;
+            const growInterval = setInterval(() => {
+                fontSize += 0.15;
+                response.style.fontSize = fontSize + 'em';
+                if (fontSize >= 3) {
+                    clearInterval(growInterval);
+                }
+            }, 100);
+            
+            response.style.animation = 'glitch 0.5s';
+            
+            // 播放恐怖音效
+            playGlitchSound();
+            setTimeout(playDroneSound, 200);
+            
+            // 禁用当前问题的所有按钮
+            const buttons = document.querySelectorAll(`#questionArea .choice-button`);
+            buttons.forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            setTimeout(() => {
+                if (qNum === 1) showQuestion2();
+                else if (qNum === 2) showQuestion3();
+                else if (qNum === 3) finalJudgment();
+            }, 2000);
+        }
+
+        function finalJudgment() {
+            setTimeout(() => {
+                document.body.style.animation = 'glitch 1s infinite';
+                alert('报应模式——执行。');
+                
+                setTimeout(() => {
+                    document.body.style.animation = '';
+                    goToChapter(6);
+                }, 2000);
+            }, 3000);
+        }
+
+        // ==================== 第六章：结局 ====================
+        
+        function showEnding() {
+            const truthCount = userChoices.filter(c => c === 'truth' || c === 'no').length;
+            const excuseCount = userChoices.filter(c => c === 'deny' || c === 'justify' || c === 'excuse').length;
+            
+            let ending = '';
+            
+            if (truthCount >= 2) {
+                // 结局A：悔悟
+                document.body.style.background = 'linear-gradient(to bottom, #000000, #001100)';
+                document.body.style.color = '#33ff33';
+                ending = `
+                    <h2 style="color: #33ff33;">结局 A：悔悟</h2>
+                    <h3 style="font-size: 1.3em; margin: 20px 0;">Beneath the Cage</h3>
+                    
+                    <div class="narrative-text">
+                        <p>你说出了真相。</p>
+                        <p>六年来第一次，你承认了那不是"培训"，那是暴行。</p>
+                        <p>你承认了你签字时的恐惧，你承认了你六年的沉默，你承认了你不配被原谅。</p>
+                    </div>
+                    
+                    <div class="document" style="margin: 30px 0;">
+                        <p class="warning-static" style="animation: none; text-align: center; font-size: 1.2em;">
+                            "不是惩罚。是记忆。"
+                        </p>
+                        <p style="text-align: center; margin-top: 20px;">
+                            你承认了，那么这次到此为止。
+                        </p>
+                    </div>
+                    
+                    <div class="narrative-text">
+                        <p>屏幕开始变亮。那些呼吸声渐渐远去。</p>
+                        <p>你仍然能听到它们，但不再是威胁，而是提醒。</p>
+                        <p>那287条生命，它们没有要你的命，它们只是要你记住——</p>
+                        <p><strong>记住那些无法发声的，记住那些被掩盖的，记住那些你曾选择遗忘的。</strong></p>
+                        <p style="margin-top: 40px; text-align: center; font-size: 1.1em;">
+                            案件结案：动物无罪。<br>
+                            人自己，才是最终的审判者。
+                        </p>
+                    </div>
+                `;
+                
+            } else if (excuseCount >= 2) {
+                // 结局C：共犯
+                document.body.style.background = '#000000';
+                document.body.style.color = '#ff0000';
+                ending = `
+                    <h2 style="color: #ff0000;" class="glitch">结局 C：共犯</h2>
+                    <h3 style="font-size: 1.3em; margin: 20px 0;">Protocol Ω</h3>
+                    
+                    <div class="narrative-text">
+                        <p>你选择了否认。</p>
+                        <p>直到最后，你仍然说那是"培训"，你仍然说你"什么都不知道"。</p>
+                        <p>你以为这样就能逃脱。</p>
+                    </div>
+                    
+                    <div class="document" style="border-color: #ff0000; margin: 30px 0;">
+                        <p class="warning-static" style="text-align: center; font-size: 1.2em;">
+                            "案件编号：Ω — 已归档。"
+                        </p>
+                        <p style="text-align: center; margin-top: 20px; color: #ff3333;">
+                            离开不会清除这份记忆。
+                        </p>
+                    </div>
+                    
+                    <div class="narrative-text">
+                        <p>屏幕没有变亮。那些呼吸声更近了。</p>
+                        <p>它们围绕着你，287个声音，重叠，扭曲。</p>
+                        <p>你试图关闭浏览器，但页面不动。</p>
+                        <p>你试图关机，但屏幕仍然亮着。</p>
+                        <p style="margin-top: 40px; text-align: center; font-size: 1.1em; color: #ff0000;">
+                            你以为你在调查案件。<br>
+                            其实，<strong>你就是案件本身</strong>。<br><br>
+                            0417永远记得。<br>
+                            你的名字已被写入名单。<br><br>
+                            <span style="font-size: 1.3em; animation: blink 1s infinite;">持续监控中...</span>
+                        </p>
+                    </div>
+                `;
+                
+            } else {
+                // 结局B：旁观
+                document.body.style.background = '#0a0a0a';
+                document.body.style.color = '#666666';
+                ending = `
+                    <h2 style="color: #666666;">结局 B：旁观</h2>
+                    <h3 style="font-size: 1.3em; margin: 20px 0;">Rule of Silence</h3>
+                    
+                    <div class="narrative-text">
+                        <p>你既没有完全否认，也没有完全承认。</p>
+                        <p>你说你害怕，说你试图忘记，说你希望被原谅。</p>
+                        <p>就像六年前，你站在笼区外，什么都没做，什么都没说。</p>
+                    </div>
+                    
+                    <div class="document" style="border-color: #666666; margin: 30px 0;">
+                        <p style="text-align: center; font-size: 1.2em; color: #888888;">
+                            "页面已恢复。"
+                        </p>
+                        <p style="text-align: center; margin-top: 20px;">
+                            目击者未接入。
+                        </p>
+                    </div>
+                    
+                    <div class="narrative-text">
+                        <p>屏幕渐渐恢复正常。绿色的字符又变成了白色。</p>
+                        <p>carepets.org重新变成了一个普通的公益网站。</p>
+                        <p>那些声音消失了，就好像从未存在。</p>
+                        <p style="margin-top: 40px;">但你知道，它们还在。</p>
+                        <p>在你每次闭上眼睛的时候。</p>
+                        <p>在你每次路过那片草地的时候。</p>
+                        <p>在你每次看到流浪狗的时候。</p>
+                        <p style="margin-top: 40px; text-align: center; font-size: 1.1em; color: #888888;">
+                            系统正常运行。<br><br>
+                            你回到了日常生活。<br>
+                            工作，吃饭，睡觉。<br><br>
+                            就像那287条生命，<br>
+                            从未存在过一样。<br><br>
+                            <strong>沉默，有时是最深的共谋。</strong>
+                        </p>
+                    </div>
+                `;
+            }
+            
+            ending += `
+                <div style="margin-top: 60px; padding-top: 40px; border-top: 1px solid currentColor;">
+                    <p style="font-size: 1.1em;">游戏时间：${document.getElementById('timer').textContent}</p>
+                    <p style="font-size: 0.95em; margin-top: 15px; opacity: 0.8;">收集的线索：${collectedClues.length} 条</p>
+                    
+                    <div style="margin-top: 40px; text-align: center;">
+                        <p style="font-size: 0.9em; line-height: 2; opacity: 0.7;">
+                            这个游戏基于真实的动物管控争议事件改编。<br>
+                            每年有数百万只流浪动物在"管控"名义下被处理。<br>
+                            有些死亡，被称为"培训"。<br>
+                            有些真相，被改写成"专业报告"。<br><br>
+                            记住它们。<br>
+                            不要让沉默成为常态。
+                        </p>
+                    </div>
+                    
+                    <button onclick="location.reload()" style="margin-top: 40px; font-size: 1.1em; padding: 20px 40px;">
+                        重新开始
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('endingContent').innerHTML = ending;
+        }
+
+        // ==================== 第4章滚动触发效果 ====================
+        
+        let revelationTriggered = false;
+        
+        // 监听滚动事件
+        window.addEventListener('scroll', function() {
+            if (currentChapter === 4 && !revelationTriggered) {
+                const revelationEl = document.getElementById('revelationText');
+                if (revelationEl) {
+                    const rect = revelationEl.getBoundingClientRect();
+                    const isVisible = rect.top < window.innerHeight * 0.8;
+                    
+                    if (isVisible) {
+                        revelationTriggered = true;
+                        triggerRevelation();
+                    }
+                }
+            }
+        });
+        
+        // 触发真相揭示（打字机效果）
+        async function triggerRevelation() {
+            const container = document.getElementById('revelationContent');
+            const texts = [
+                '你盯着屏幕。',
+                '这些文字像是活的，在你眼前扭动。',
+                '你想起来了。',
+                '不是"想起"，是一直都记得，只是不敢面对。',
+                '2019年4月17日。那天，笼子的门坏了。你进去了。你看到了。',
+                '然后，你签了字。报告上写着"培训通过"。',
+                '你的名字一直在上面。'
+            ];
+            
+            for (let i = 0; i < texts.length; i++) {
+                const p = document.createElement('p');
+                container.appendChild(p);
+                
+                await typeWriterEffect(p, texts[i], 40);
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // 每行打完播放音效
+                if (audioContext) {
+                    const osc = audioContext.createOscillator();
+                    const gain = audioContext.createGain();
+                    osc.frequency.value = 400 - i * 50;
+                    gain.gain.value = 0.08;
+                    osc.connect(gain);
+                    gain.connect(audioContext.destination);
+                    osc.start();
+                    osc.stop(audioContext.currentTime + 0.1);
+                }
+            }
+            
+            // 最后一行：你是0417（放大显示）
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            const finalP = document.createElement('p');
+            finalP.className = 'warning';
+            finalP.style.fontSize = '3em';
+            finalP.style.textAlign = 'center';
+            finalP.style.margin = '40px 0';
+            container.appendChild(finalP);
+            
+            await typeWriterEffect(finalP, '你是0417。', 100);
+            
+            // 额外的震撼效果
+            if (audioContext) {
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        playGlitchSound();
+                        playDroneSound();
+                    }, i * 400);
+                }
+            }
+            
+            if (audioContext) {
+                playDroneSound();
+            }
+            
+            // 打字完成后，显示第四个谜题
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            document.getElementById('puzzle4Container').style.display = 'block';
+        }
+        
+        // 打字机效果辅助函数
+        async function typeWriterEffect(element, text, speed = 50) {
+            for (let i = 0; i < text.length; i++) {
+                element.textContent += text[i];
+                await new Promise(resolve => setTimeout(resolve, speed));
+            }
+        }
+        
+        // ==================== 第5章屏幕效果 ====================
+        
+        let chapter5EffectsTriggered = false;
+        
+        // 第5章进入时触发屏幕效果
+        function triggerChapter5Effects() {
+            if (chapter5EffectsTriggered) return;
+            chapter5EffectsTriggered = true;
+            
+            // 延迟一点开始效果
+            setTimeout(() => {
+                // 屏幕闪黑
+                document.body.style.transition = 'background 0.5s, filter 0.5s';
+                document.body.style.background = '#000';
+                
+                setTimeout(() => {
+                    // 变成深红色
+                    document.body.style.background = '#0a0000';
+                    document.body.style.filter = 'contrast(1.2) brightness(0.9)';
+                    
+                    // 强化呼吸声
+                    if (audioContext) {
+                        playBreathingSound();
+                        playBreathingSound();
+                    }
+                    
+                    // 轻微抖动
+                    let shakeCount = 0;
+                    const shakeInterval = setInterval(() => {
+                        if (shakeCount < 5) {
+                            document.body.style.transform = `translate(${Math.random() * 4 - 2}px, ${Math.random() * 4 - 2}px)`;
+                            shakeCount++;
+                        } else {
+                            clearInterval(shakeInterval);
+                            document.body.style.transform = '';
+                        }
+                    }, 100);
+                    
+                    // 显示"你还记得那天吗，0417？"
+                    setTimeout(() => {
+                        showChapter5Text();
+                    }, 2000);
+                }, 500);
+            }, 1000);
+        }
+        
+        // 第5章文字显示
+        async function showChapter5Text() {
+            // 查找narrative-text区域
+            const narratives = document.querySelectorAll('#chapter5 .narrative-text');
+            if (narratives.length > 0) {
+                const firstNarrative = narratives[0];
+                const warningP = firstNarrative.querySelector('p.warning');
+                if (warningP) {
+                    warningP.textContent = '';
+                    await typeWriterEffect(warningP, '"你还记得那天吗，0417？"', 60);
+                    
+                    if (audioContext) {
+                        playGlitchSound();
+                        setTimeout(playDroneSound, 300);
+                    }
+                }
+            }
+        }
+        
+        // 修改goToChapter，在第5章时触发效果
+        const originalGoToChapter = goToChapter;
+        goToChapter = function(num) {
+            originalGoToChapter(num);
+            if (num === 5) {
+                triggerChapter5Effects();
+            }
+        };
+
+        // 初始化
+        updateProgress();
+        updateInventory();
+    </script>
+</body>
+</html>
